@@ -8,11 +8,11 @@
 # Step 1. Change these values to your liking.
 
 PLUGIN_NAME="$(basename $(dirname $(realpath $0)))"
-PLUGIN_TITLE='My ChRIS Plugin'
-SCRIPT_NAME='commandname'
-DESCRIPTION='A ChRIS plugin to do something awesome'
+PLUGIN_TITLE='MNI Xfm Transformations'
+SCRIPT_NAME='xfmwrapper'
+DESCRIPTION='A ChRIS plugin to perform XFM transformations on volumes and surfaces'
 ORGANIZATION='FNNDSC'
-EMAIL='dev@babyMRI.org'
+EMAIL='Jennings.Zhang@childrens.harvard.edu'
 
 # automatic testing, building, and release
 # https://github.com/FNNDSC/cookiecutter-chrisapp/wiki/Automatic-Builds
@@ -20,7 +20,7 @@ ENABLE_CI=yes
 
 # Step 2. Uncomment the line below.
 
-#READY=yes
+READY=yes
 
 # Step 3. Run: ./bootstrap.sh
 
