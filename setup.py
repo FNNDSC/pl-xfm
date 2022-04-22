@@ -1,19 +1,19 @@
 from setuptools import setup
 
 setup(
-    name='chris-plugin-template',
-    version='1.0.0',
-    description='A ChRIS DS plugin template',
-    author='FNNDSC',
-    author_email='dev@babyMRI.org',
-    url='https://github.com/FNNDSC/python-chrisapp-template',
-    py_modules=['app'],
-    install_requires=['chris_plugin'],
+    name='cxfm',
+    version='0.0.1',
+    description='A ChRIS plugin to perform XFM transformations on surfaces',
+    author='Jennings Zhang',
+    author_email='Jennings.Zhang@childrens.harvard.edu',
+    url='https://github.com/FNNDSC/pl-xfm',
+    py_modules=['cxfm'],
+    install_requires=['chris_plugin', 'pycivet', 'loguru'],
     license='MIT',
-    python_requires='>=3.8.2',
+    python_requires='>=3.10.2',
     entry_points={
         'console_scripts': [
-            'commandname = app:main'
+            'cxfm = cxfm:main'
         ]
     },
     classifiers=[
