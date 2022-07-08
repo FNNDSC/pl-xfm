@@ -4,11 +4,11 @@ import sys
 from pathlib import Path
 from argparse import ArgumentParser, Namespace, ArgumentDefaultsHelpFormatter
 from importlib.metadata import Distribution
-from typing import Iterable
 
 from loguru import logger
 from chris_plugin import chris_plugin, PathMapper
 from civet.obj import Surface
+from civet.minc import MincVolume
 from civet.xfm import TransformableMixin, Transformations, Xfm
 from civet.memoization import Session
 
@@ -30,13 +30,13 @@ DISPLAY_TITLE = r"""
 
 parser = ArgumentParser(description='Perform XFM transformations on surfaces',
                         formatter_class=ArgumentDefaultsHelpFormatter)
-parser.add_argument('-i', '--inputs', default='.obj',
+parser.add_argument('-i', '--inputs', default='.mnc,.obj',
                     help='file extension of input files, comma-separated '
                          '(currently, only .obj is supported)')
 parser.add_argument('-s', '--scale', type=float, required=True,
                     help='Scale factor')
 parser.add_argument('-V', '--version', action='version',
-                    version=f'$(prog)s {__version__}')
+                    version=f'%(prog)s {__version__}')
 
 
 # documentation: https://fnndsc.github.io/chris_plugin/chris_plugin.html#chris_plugin
@@ -50,8 +50,9 @@ parser.add_argument('-V', '--version', action='version',
 def main(options: Namespace, inputdir: Path, outputdir: Path):
     print(DISPLAY_TITLE, file=sys.stderr, flush=True)
     logger.info('Scale: {}', options.scale)
-    mapper = multi_mapper(inputdir, outputdir, options.inputs)
-
+    globs = ['**/*' + s for s in options.inputs.split(',')]
+    logger.info('Input globs: {}', globs)
+    mapper = PathMapper.file_mapper(inputdir, outputdir, glob=globs)
     scale = Xfm(Transformations.SCALES, options.scale, options.scale, options.scale)
 
     with Session() as s:
@@ -64,18 +65,10 @@ def main(options: Namespace, inputdir: Path, outputdir: Path):
 def transformable(p: Path) -> TransformableMixin:
     if p.suffix == '.obj':
         return Surface(p)
+    if p.suffix == '.mnc':
+        return MincVolume(p)
     logger.error('Unsupported file type for {}', p)
     raise ValueError(f'Unsupported file type: {p.suffix}')
-
-
-def multi_mapper(inputdir: Path, outputdir: Path, file_extensions: str) -> Iterable[tuple[Path, Path]]:
-    for file_extension in file_extensions.split(','):
-        yield from PathMapper(
-            inputdir, outputdir,
-            glob=f'**/*{file_extension}',
-            suffix=file_extension,
-            fail_if_empty=False
-        )
 
 
 if __name__ == '__main__':
