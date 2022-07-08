@@ -5,7 +5,7 @@
 [![ci](https://github.com/FNNDSC/pl-xfm/actions/workflows/ci.yml/badge.svg)](https://github.com/FNNDSC/pl-xfm/actions/workflows/ci.yml)
 
 `pl-xfm` is a [_ChRIS_](https://chrisproject.org/)
-_ds_ plugin which takes in `.obj` (todo: or `.mnc` files)
+_ds_ plugin which takes in `.obj` and `.mnc` files
 from an input directory, applies the linear transformation
 specified by its arguments, and writes the results
 to an output directory.
@@ -37,6 +37,7 @@ to be larger by a factor of 2, run
 singularity exec docker://fnndsc/pl-xfm cxfm --scale 2.0 incoming/ outgoing/
 ```
 
-Some example `.obj` files can be obtained from here:
+### Sample Data
 
-https://github.com/aces/surface-extraction/tree/97a1ebe08c716e651531eddda949d8fa6ce8f0f1/models
+- https://github.com/aces/surface-extraction/tree/97a1ebe08c716e651531eddda949d8fa6ce8f0f1/models
+- https://github.com/aces/CIVET_Full_Project/blob/master/Test/mni_icbm_00100_t1.mnc

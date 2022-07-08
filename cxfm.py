@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import os
+import subprocess
 import sys
 from pathlib import Path
 from argparse import ArgumentParser, Namespace, ArgumentDefaultsHelpFormatter
@@ -11,6 +13,7 @@ from civet.obj import Surface
 from civet.minc import MincVolume
 from civet.xfm import TransformableMixin, Transformations, Xfm
 from civet.memoization import Session
+from concurrent.futures import ThreadPoolExecutor
 
 __pkg = Distribution.from_name(__package__)
 __version__ = __pkg.version
@@ -28,13 +31,15 @@ DISPLAY_TITLE = r"""
 """
 
 
-parser = ArgumentParser(description='Perform XFM transformations on surfaces',
+parser = ArgumentParser(description='Perform XFM transformations on surfaces and masks',
                         formatter_class=ArgumentDefaultsHelpFormatter)
 parser.add_argument('-i', '--inputs', default='.mnc,.obj',
-                    help='file extension of input files, comma-separated '
-                         '(currently, only .obj is supported)')
+                    help='file extension of input files, comma-separated')
 parser.add_argument('-s', '--scale', type=float, required=True,
                     help='Scale factor')
+parser.add_argument('-r', '--rename', type=str, required=False,
+                    help='String to insert before file extension of output files. '
+                         "Use '%%s' to represent the value given for --scale")
 parser.add_argument('-V', '--version', action='version',
                     version=f'%(prog)s {__version__}')
 
@@ -48,18 +53,34 @@ parser.add_argument('-V', '--version', action='version',
     min_cpu_limit='1000m',
 )
 def main(options: Namespace, inputdir: Path, outputdir: Path):
-    print(DISPLAY_TITLE, file=sys.stderr, flush=True)
-    logger.info('Scale: {}', options.scale)
     globs = ['**/*' + s for s in options.inputs.split(',')]
-    logger.info('Input globs: {}', globs)
     mapper = PathMapper.file_mapper(inputdir, outputdir, glob=globs)
     scale = Xfm(Transformations.SCALES, options.scale, options.scale, options.scale)
 
+    print(DISPLAY_TITLE, file=sys.stderr, flush=True)
+    logger.info('Scale: {}', options.scale)
+    logger.info('Input globs: {}', globs)
+
     with Session() as s:
-        for input_file, output_file in mapper:
-            r = transformable(input_file).append_xfm(scale)
-            s.save(r, output_file)
-            logger.info('{} -> {}', input_file, output_file)
+        with ThreadPoolExecutor(max_workers=len(os.sched_getaffinity(0))) as pool:
+            def process(input_file: Path, output_file: Path) -> None:
+                if options.rename:
+                    pre = options.rename.replace('%s', str(options.scale))
+                    output_file = output_file.with_suffix(f'.{pre}{output_file.suffix}')
+                try:
+                    r = transformable(input_file).append_xfm(scale)
+                    s.save(r, output_file)
+                    logger.info('{} -> {}', input_file, output_file)
+                except subprocess.CalledProcessError as e:
+                    logger.exception(e)
+                    # "fail-fast": cancel pending jobs on first failure
+                    pool.shutdown(cancel_futures=True)
+                    sys.exit(1)
+            results = pool.map(lambda t: process(*t), mapper)
+
+    # raise any uncaught exceptions
+    for _ in results:
+        pass
 
 
 def transformable(p: Path) -> TransformableMixin:

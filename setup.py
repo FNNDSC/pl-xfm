@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='cxfm',
-    version='0.0.1',
+    version='0.1.0',
     description='A ChRIS plugin to perform XFM transformations on surfaces',
     author='Jennings Zhang',
     author_email='Jennings.Zhang@childrens.harvard.edu',
